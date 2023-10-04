@@ -1,1 +1,6 @@
-{}
+{
+  "tasks": {
+    "run": "deno run --unstable --allow-net --allow-write --allow-read --allow-env src/main.ts",
+    "build": "deno compile --target x86_64-pc-windows-msvc --unstable --allow-net --allow-write --allow-read --allow-env -o dist/wowa.exe src/main.ts "
+  }
+}
