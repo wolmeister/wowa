@@ -194,7 +194,8 @@ fn main() {
 	res2 := http.fetch(req2) or { panic(err) }
 	body2 := json.decode(CurseAddonFileResponse, res2.body) or { panic(err) }
 
-	_, zip_file_path := util.temp_file() or { panic(err) }
+	mut zip_file, zip_file_path := util.temp_file() or { panic(err) }
+	zip_file.close()
 
 	println("Downloading file")
 	http.download_file(body2.data.download_url, zip_file_path) or { panic(err) }
