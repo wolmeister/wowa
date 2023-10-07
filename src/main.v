@@ -1,11 +1,14 @@
 
 module main
 
+
 import os
 import net.http
 import json
 import io.util
 import szip
+
+import kv
 
 struct CursePagination {
 	index        int
@@ -128,9 +131,7 @@ fn main() {
 		os.mkdir_all(os.dir(db_path))!
 	}
 
-	kv := KeyValueStore{
-		path: db_path
-	}
+	mut store := kv.init_store(db_path) or { panic(err) }
 
 	println("Using db PATH ${db_path}")
 	println("Args: ${os.args}")
@@ -146,12 +147,12 @@ fn main() {
 		}
 
 		if os.args.len == 3 {
-			value := kv.get(['config',os.args[2]]) or { 'null' }
+			value := store.get(['config',os.args[2]]) or { 'null' }
 			println(value)
 			return
 		}
 
-		kv.set(['config', os.args[2]], os.args[3])
+		store.set(['config', os.args[2]], os.args[3])!
 		return
 	}
 
@@ -162,8 +163,8 @@ fn main() {
 
 	slug := os.args[2]
 
-	game_dir := kv.get(['config', 'game.dir']) or { panic('Missing game.dir prop') }
-	curse_token := kv.get(['config', 'curse.token']) or { panic('Missing curse.token prop') }
+	game_dir := store.get(['config', 'game.dir']) or { panic('Missing game.dir prop') }
+	curse_token := store.get(['config', 'curse.token']) or { panic('Missing curse.token prop') }
 
 	println('Searching for addon ${slug}')
 	req := http.FetchConfig{
@@ -211,7 +212,7 @@ fn main() {
 
 	os.rm(zip_file_path)!
 
-	kv.set(['addons', 'retail', slug], json.encode(Addon{
+	store.set(['addons', 'retail', slug], json.encode(Addon{
 		id: slug
 		name: addon.name
 		author: 'author'
@@ -223,56 +224,5 @@ fn main() {
 			id: addon.id.str()
 			url: 'https://www.curseforge.com/wow/addons/${slug}'
 		}
-	}))
-}
-
-struct KeyValueStore {
-	path string [required]
-}
-
-struct KeyValueEntry {
-	key   []string
-	value string
-}
-
-fn (store KeyValueStore) get(key []string) ?string {
-	file_exists := os.exists(store.path)
-	if file_exists == false {
-		return none
-	}
-	stringied_json := os.read_file(store.path) or { panic(err) }
-	entries := json.decode([]KeyValueEntry, stringied_json) or { panic(err) }
-	entry := entries.filter(it.key == key)
-	if entry.len == 1 {
-		return entry.first().value
-	}
-	return none
-}
-
-fn (store KeyValueStore) set(key []string, value string) {
-	file_exists := os.exists(store.path)
-	mut stringied_json := '[]'
-	if file_exists == true {
-		stringied_json = os.read_file(store.path) or { panic(err) }
-	} else {
-		mut created_file := os.create(store.path) or { panic(err) }
-		created_file.close()
-		mut file := os.open_append(store.path) or { panic(err) }
-		file.write_string('[]') or { panic(err) }
-		file.close()
-	}
-	entries := json.decode([]KeyValueEntry, stringied_json) or { panic(err) }
-	mut unique_entries := entries.filter(it.key != key)
-	unique_entries.insert(0, KeyValueEntry{
-		key: key
-		value: value
-	})
-
-	result := json.encode(unique_entries)
-
-	// println(result)
-
-	mut file := os.open_file(store.path, 'w') or { panic(err) }
-	file.write_string(result) or { panic(err) }
-	file.close()
+	})) or { panic(err) }
 }
