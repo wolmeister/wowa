@@ -8,7 +8,7 @@ struct KeyValueEntry {
 	value string
 }
 
-struct KeyValueStore {
+pub struct KeyValueStore {
 	path string [required]
 mut:
 	entries []KeyValueEntry [required]

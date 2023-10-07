@@ -9,6 +9,7 @@ import io.util
 import szip
 
 import kv
+import command
 
 struct CursePagination {
 	index        int
@@ -126,11 +127,6 @@ fn main() {
 	}
 
 	db_path := get_db_path()
-	if os.exists(os.dir(db_path)) == false {
-		println("Creating dirs ${os.dir(db_path)}")
-		os.mkdir_all(os.dir(db_path))!
-	}
-
 	mut store := kv.init_store(db_path) or { panic(err) }
 
 	println("Using db PATH ${db_path}")
@@ -138,9 +134,9 @@ fn main() {
 
 	// println(get_db_path())
 
-	command := os.args[1]
+	command_arg := os.args[1]
 
-	if command == 'config' {
+	if command_arg == 'config' {
 		if os.args.len == 2 {
 			println("missing name")
 			return
@@ -156,7 +152,12 @@ fn main() {
 		return
 	}
 
-	if command != 'add' {
+	if command_arg == 'ls' {
+		command.execute_ls_command(store, os.args) or { panic(err) }
+		return
+	}
+
+	if command_arg != 'add' {
 		println('invalid command')
 		return
 	}
