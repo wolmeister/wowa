@@ -1,0 +1,45 @@
+name: Build and Publish
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Vlang
+        run: |
+          # Install dependencies needed for Vlang
+          sudo apt-get update
+          sudo apt-get install -y build-essential git
+
+          # Download and install Vlang
+          git clone https://github.com/vlang/v
+          cd v
+          make
+
+          # Add Vlang to the PATH
+        #          export PATH="$HOME/v/bin:$PATH"
+        shell: bash
+
+#      - name: Build the project
+#        run: |
+#          # Navigate to your project directory (adjust the path)
+#          cd path/to/your/v/project
+#
+#          # Replace 'your_build_script' with the actual build command for your project
+#          v your_build_script
+#        shell: bash
+
+#      - name: Upload build artifacts
+#        uses: actions/upload-artifact@v2
+#        with:
+#          name: linux-build
+#          path: path/to/your/v/project/build  # Adjust the path to your project's build artifacts
+
