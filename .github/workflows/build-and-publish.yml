@@ -11,10 +11,9 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Vlang
-        shell: bash
         run: |
           # Install dependencies needed for Vlang
           sudo apt-get update
@@ -25,16 +24,12 @@ jobs:
           cd v
           make
           sudo ./v symlink
-          v --version
 
-#      - name: Build the project
-#        run: |
-#          # Navigate to your project directory (adjust the path)
-#          cd path/to/your/v/project
-#
-#          # Replace 'your_build_script' with the actual build command for your project
-#          v your_build_script
-#        shell: bash
+      - name: Build the project
+        run: |
+          v -os windows .
+          ls -alh
+
 
 #      - name: Upload build artifacts
 #        uses: actions/upload-artifact@v2
