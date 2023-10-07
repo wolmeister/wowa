@@ -5,6 +5,9 @@ on:
     tags:
       - "v*.*.*"
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,7 +28,7 @@ jobs:
           make
           sudo ./v symlink
 
-      - name: Build the project
+      - name: Build
         run: |
           v -os windows .
 
