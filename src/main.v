@@ -199,8 +199,14 @@ fn main() {
 	println("Downloading file")
 	http.download_file(body2.data.download_url, zip_file_path) or { panic(err) }
 
+	addons_folder := os.join_path(game_dir, '/_retail_/Interface/Addons')
+	if os.exists(addons_folder) == false {
+		println('Creating addons folder')
+		os.mkdir_all(addons_folder)!
+	}
+
 	println("Extracting file")
-	szip.extract_zip_to_dir(zip_file_path, os.join_path(game_dir, '/_retail_/Interface/Addons'))!
+	szip.extract_zip_to_dir(zip_file_path, addons_folder)!
 
 	os.rm(zip_file_path)!
 
@@ -248,7 +254,6 @@ fn (store KeyValueStore) set(key []string, value string) {
 	if file_exists == true {
 		stringied_json = os.read_file(store.path) or { panic(err) }
 	} else {
-		println("file dont exist")
 		mut created_file := os.create(store.path) or { panic(err) }
 		created_file.close()
 		mut file := os.open_append(store.path) or { panic(err) }
