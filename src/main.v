@@ -163,6 +163,10 @@ fn main() {
 	}
 
 	slug := os.args[2]
+	classic := os.args.len == 4 && os.args[3] == '--classic'
+	game_version_type_id :=  if classic { 67408 } else { 517 };
+
+	println('Is classic: ${classic}')
 
 	game_dir := store.get(['config', 'game.dir']) or { panic('Missing game.dir prop') }
 	curse_token := store.get(['config', 'curse.token']) or { panic('Missing curse.token prop') }
@@ -170,7 +174,7 @@ fn main() {
 	println('Searching for addon ${slug}')
 	req := http.FetchConfig{
 		method: .get
-		url: 'https://api.curseforge.com/v1/mods/search?gameId=1&categoryId=0&searchFilter=${slug}&sortField=2&sortOrder=desc&index=0&gameType=517'
+		url: 'https://api.curseforge.com/v1/mods/search?gameId=1&categoryId=0&searchFilter=${slug}&sortField=2&sortOrder=desc&index=0&gameVersionTypeId=${game_version_type_id}'
 		header: http.new_custom_header_from_map({
 			'x-api-key': curse_token
 		})!
@@ -181,7 +185,7 @@ fn main() {
 
 	println("Searching for file index")
 	addon := body.data.filter(it.slug == slug).first()
-	file_index := addon.latest_files_indexes.filter(it.game_version_type_id == 517
+	file_index := addon.latest_files_indexes.filter(it.game_version_type_id == game_version_type_id
 		&& it.release_type == 1).first()
 
 	println("Fetching file")
@@ -202,7 +206,8 @@ fn main() {
 	println("Downloading file")
 	http.download_file(body2.data.download_url, zip_file_path) or { panic(err) }
 
-	addons_folder := os.join_path(game_dir, '/_retail_/Interface/Addons')
+	version_folder := if classic { '_classic_era_' } else { '_retail_' }
+	addons_folder := os.join_path(game_dir, '/${version_folder}/Interface/Addons')
 	if os.exists(addons_folder) == false {
 		println('Creating addons folder')
 		os.mkdir_all(addons_folder)!
@@ -213,12 +218,12 @@ fn main() {
 
 	os.rm(zip_file_path)!
 
-	store.set(['addons', 'retail', slug], json.encode(Addon{
+	store.set(['addons', if classic { 'classic' } else { 'retail' }, slug], json.encode(Addon{
 		id: slug
 		name: addon.name
 		author: 'author'
 		version: body2.data.display_name
-		game_version: 'retail'
+		game_version: if classic { 'classic' } else { 'retail' }
 		directories: body2.data.modules.map(it.name)
 		source: AddonSource{
 			provider: 'curse'
