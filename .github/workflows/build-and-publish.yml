@@ -30,7 +30,7 @@ jobs:
 
       - name: Build
         run: |
-          v -os windows --prod .
+          v -os windows -prod .
 
       - name: Publish
         uses: softprops/action-gh-release@v1
