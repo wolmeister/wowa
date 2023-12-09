@@ -174,7 +174,7 @@ fn main() {
 	println('Searching for addon ${slug}')
 	req := http.FetchConfig{
 		method: .get
-		url: 'https://api.curseforge.com/v1/mods/search?gameId=1&categoryId=0&searchFilter=${slug}&sortField=2&sortOrder=desc&index=0&gameVersionTypeId=${game_version_type_id}'
+		url: 'https://api.curseforge.com/v1/mods/search?gameId=1&slug=${slug}&sortField=2&sortOrder=desc&index=0&gameVersionTypeId=${game_version_type_id}'
 		header: http.new_custom_header_from_map({
 			'x-api-key': curse_token
 		})!
