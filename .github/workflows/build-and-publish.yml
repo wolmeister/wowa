@@ -2,10 +2,8 @@ name: Build and Publish
 
 on:
   push:
-    branches:
-      - dotnet
-    # tags:
-    #   - 'v*.*.*'
+    tags:
+      - 'v*.*.*'
 
 permissions:
   contents: write
