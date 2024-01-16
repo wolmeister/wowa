@@ -2,38 +2,32 @@ name: Build and Publish
 
 on:
   push:
-    tags:
-      - "v*.*.*"
+    branches:
+      - dotnet
+    # tags:
+    #   - 'v*.*.*'
 
 permissions:
   contents: write
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Vlang
-        run: |
-          # Install dependencies needed for Vlang
-          sudo apt-get update
-          sudo apt-get install -y gcc-mingw-w64-x86-64
-
-          # Download and install Vlang
-          git clone https://github.com/vlang/v
-          cd v
-          make
-          sudo ./v symlink
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8'
 
       - name: Build
         run: |
-          v -os windows -prod .
+          dotnet publish
 
       - name: Publish
         uses: softprops/action-gh-release@v1
         with:
-          files: wowa.exe
-
+          files: wowa/bin/Release/net8.0/win-x64/publish/wowa.exe
