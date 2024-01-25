@@ -1,4 +1,5 @@
 ﻿using System.CommandLine;
+using Kurukuru;
 using wowa.Curse;
 
 namespace wowa;
@@ -74,7 +75,7 @@ internal static class Program {
             // if (url.StartsWith("https://www.curseforge.com/wow/addons/") == false)
             //     result.ErrorMessage = "The URl should start with 'https://www.curseforge.com/wow/addons/'";
         });
-        installCommand.SetHandler((url, classic) => {
+        installCommand.SetHandler(async (url, classic) => {
             var curseToken = store.Get(["config", "curse.token"]);
             var gameFolder = store.Get(["config", "game.dir"]);
             if (curseToken == null) throw new Exception("Missing curse.token config");
@@ -82,20 +83,26 @@ internal static class Program {
             var curseClient = new CurseApi(curseToken);
             var addonManager = new AddonManager(curseClient, addonRepository, gameFolder);
             Console.WriteLine("Game Folder: " + gameFolder);
-            addonManager.InstallByUrl(url, classic ? GameVersion.Classic : GameVersion.Retail);
+
+            await Spinner.StartAsync($"Installing {url}...",
+                async spinner => {
+                    var addon = await addonManager.InstallByUrl(url,
+                        classic ? GameVersion.Classic : GameVersion.Retail);
+                    spinner.Succeed($"Installed {addon.Id} version {addon.Version}");
+                });
         }, urlArgument, classicOption);
 
         // Update command
         var updateCommand = new Command("update", "Update all addons");
         updateCommand.AddAlias("up");
-        updateCommand.SetHandler(() => {
+        updateCommand.SetHandler(async () => {
             var curseToken = store.Get(["config", "curse.token"]);
             var gameFolder = store.Get(["config", "game.dir"]);
             if (curseToken == null) throw new Exception("Missing curse.token config");
             if (gameFolder == null) throw new Exception("Missing game.dir config");
             var curseClient = new CurseApi(curseToken);
             var addonManager = new AddonManager(curseClient, addonRepository, gameFolder);
-            addonManager.UpdateAll();
+            await addonManager.UpdateAll();
         });
 
         // Delete command

@@ -38,22 +38,29 @@ public class KeyValueStore {
     }
 
     public string? Get(List<string> key) {
-        var entry = _entries.FirstOrDefault(e => e.Key.SequenceEqual(key));
-        return entry?.Value;
+        lock (_entries) {
+            var entry = _entries.FirstOrDefault(e => e.Key.SequenceEqual(key));
+            return entry?.Value;
+        }
     }
 
     public List<string> GetByPrefix(List<string> prefix) {
-        var filteredEntries = _entries.Where(e => e.Key.Take(prefix.Count).SequenceEqual(prefix));
-        return filteredEntries.Select(e => e.Value).ToList();
+        lock (_entries) {
+            var filteredEntries = _entries.Where(e => e.Key.Take(prefix.Count).SequenceEqual(prefix));
+            return filteredEntries.Select(e => e.Value).ToList();
+        }
     }
 
     public void Set(List<string> key, string value) {
-        // Update the in-memory entries
-        _entries.RemoveAll(e => e.Key.SequenceEqual(key));
-        _entries.Add(new KeyValueEntry(key, value));
+        lock (_entries) {
+            // Update the in-memory entries
+            _entries.RemoveAll(e => e.Key.SequenceEqual(key));
+            _entries.Add(new KeyValueEntry(key, value));
 
-        // Save to disk
-        var result = JsonSerializer.Serialize(_entries, typeof(List<KeyValueEntry>), SourceGenerationContext.Default);
-        File.WriteAllText(_path, result);
+            // Save to disk
+            var result =
+                JsonSerializer.Serialize(_entries, typeof(List<KeyValueEntry>), SourceGenerationContext.Default);
+            File.WriteAllText(_path, result);
+        }
     }
 }
