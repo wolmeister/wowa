@@ -32,7 +32,7 @@ public enum ChangelogFormat {
 }
 
 public class Changelog {
-    public required string Text { get; init; }
+    public required string? Text { get; init; }
     public required ChangelogFormat Format { get; init; }
 }
 
@@ -144,7 +144,7 @@ public partial class WeakAuraManager(string gameFolder) {
     private string SerializeWeakAuraUpdate(WeakAuraUpdate update) {
         var changelog = "";
 
-        if (update.Changelog != null) {
+        if (update.Changelog != null && update.Changelog.Text != null) {
             changelog = update.Changelog.Format == ChangelogFormat.Bbcode
                 ? MarkupSanitizer.SanitizeBbCode(update.Changelog.Text)
                 : MarkupSanitizer.SanitizeMarkdown(update.Changelog.Text);
@@ -241,6 +241,10 @@ public partial class WeakAuraManager(string gameFolder) {
         var body = $"{{\"ids\": [{string.Join(",", ids)}]}}";
         var response = await client.PostAsync(url, new StringContent(body, Encoding.UTF8, "application/json"));
         var textResponse = await response.Content.ReadAsStringAsync();
+
+        Console.WriteLine("URL = " + url);
+        Console.WriteLine("-----------");
+        Console.WriteLine("TextResponse = " + textResponse);
 
         // Parse the request
         var remoteWeakAuras = JsonSerializer.Deserialize(textResponse, typeof(List<RemoteWeakAura>),
