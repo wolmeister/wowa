@@ -61,7 +61,6 @@ internal static class Program {
         var store = new KeyValueStore(dbPath);
         var addonRepository = new AddonRepository(store);
 
-        var wa = new WeakAuraManager("C:\\Program Files (x86)\\World of Warcraft").UpdateAll().Result;
 
         // Common options
         var classicOption = new Option<bool>("--classic", "Install in the classic version of the game");
