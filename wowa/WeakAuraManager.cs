@@ -33,7 +33,7 @@ public enum ChangelogFormat {
 
 public class Changelog {
     public required string? Text { get; init; }
-    public required ChangelogFormat Format { get; init; }
+    public required ChangelogFormat? Format { get; init; }
 }
 
 internal class RemoteWeakAura {
@@ -241,10 +241,6 @@ public partial class WeakAuraManager(string gameFolder) {
         var body = $"{{\"ids\": [{string.Join(",", ids)}]}}";
         var response = await client.PostAsync(url, new StringContent(body, Encoding.UTF8, "application/json"));
         var textResponse = await response.Content.ReadAsStringAsync();
-
-        Console.WriteLine("URL = " + url);
-        Console.WriteLine("-----------");
-        Console.WriteLine("TextResponse = " + textResponse);
 
         // Parse the request
         var remoteWeakAuras = JsonSerializer.Deserialize(textResponse, typeof(List<RemoteWeakAura>),
