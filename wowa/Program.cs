@@ -21,9 +21,12 @@ internal static class Program {
             largestColumns[3] = Math.Max(addon.GameVersion.ToString().Length, largestColumns[3]);
         }
 
-        foreach (var largestColumn in largestColumns)
-            for (var i = 0; i < largestColumn + 2; i++)
+        foreach (var largestColumn in largestColumns) {
+            for (var i = 0; i < largestColumn + 2; i++) {
                 Console.Write("-");
+            }
+        }
+
         Console.Write("-\n");
 
         foreach (var row in table) {
@@ -32,17 +35,24 @@ internal static class Program {
                 Console.Write("| ");
                 Console.Write(column);
 
-                for (var i = column.Length; i < largestColumns[columnIndex]; i++) Console.Write(" ");
+                for (var i = column.Length; i < largestColumns[columnIndex]; i++) {
+                    Console.Write(" ");
+                }
 
-                if (columnIndex == row.Count - 1) Console.Write("|");
+                if (columnIndex == row.Count - 1) {
+                    Console.Write("|");
+                }
             }
 
             Console.Write("\n");
         }
 
-        foreach (var largestColumn in largestColumns)
-            for (var i = 0; i < largestColumn + 2; i++)
+        foreach (var largestColumn in largestColumns) {
+            for (var i = 0; i < largestColumn + 2; i++) {
                 Console.Write("-");
+            }
+        }
+
         Console.Write("-\n");
     }
 
@@ -50,6 +60,8 @@ internal static class Program {
         var dbPath = GetDbPath();
         var store = new KeyValueStore(dbPath);
         var addonRepository = new AddonRepository(store);
+
+        var wa = new WeakAuraManager("C:\\Program Files (x86)\\World of Warcraft").UpdateAll().Result;
 
         // Common options
         var classicOption = new Option<bool>("--classic", "Install in the classic version of the game");
@@ -59,8 +71,9 @@ internal static class Program {
         retailOption.AddValidator(result => {
             var isClassic = result.GetValueForOption(classicOption);
             var isRetail = result.GetValueForOption(retailOption);
-            if (isClassic && isRetail)
+            if (isClassic && isRetail) {
                 result.ErrorMessage = "You cannot use both --classic and --retail at the same time";
+            }
         });
 
         // Add command
@@ -78,8 +91,14 @@ internal static class Program {
         installCommand.SetHandler(async (url, classic) => {
             var curseToken = store.Get(["config", "curse.token"]);
             var gameFolder = store.Get(["config", "game.dir"]);
-            if (curseToken == null) throw new Exception("Missing curse.token config");
-            if (gameFolder == null) throw new Exception("Missing game.dir config");
+            if (curseToken == null) {
+                throw new Exception("Missing curse.token config");
+            }
+
+            if (gameFolder == null) {
+                throw new Exception("Missing game.dir config");
+            }
+
             var curseClient = new CurseApi(curseToken);
             var addonManager = new AddonManager(curseClient, addonRepository, gameFolder);
             Console.WriteLine("Game Folder: " + gameFolder);
@@ -98,11 +117,24 @@ internal static class Program {
         updateCommand.SetHandler(async () => {
             var curseToken = store.Get(["config", "curse.token"]);
             var gameFolder = store.Get(["config", "game.dir"]);
-            if (curseToken == null) throw new Exception("Missing curse.token config");
-            if (gameFolder == null) throw new Exception("Missing game.dir config");
+            if (curseToken == null) {
+                throw new Exception("Missing curse.token config");
+            }
+
+            if (gameFolder == null) {
+                throw new Exception("Missing game.dir config");
+            }
+
             var curseClient = new CurseApi(curseToken);
             var addonManager = new AddonManager(curseClient, addonRepository, gameFolder);
             await addonManager.UpdateAll();
+
+            Console.WriteLine("Updating weak auras...");
+            var weakAuraManager = new WeakAuraManager(gameFolder);
+            var waUpdates = await weakAuraManager.UpdateAll();
+            Console.WriteLine(waUpdates.Count > 0
+                ? $"Updated {waUpdates.Count} weak auras"
+                : "All weak auras ar up-to-date.");
         });
 
         // Delete command
