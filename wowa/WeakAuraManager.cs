@@ -32,8 +32,8 @@ public enum ChangelogFormat {
 }
 
 public class Changelog {
-    public required string? Text { get; init; }
-    public required ChangelogFormat? Format { get; init; }
+    public string? Text { get; init; }
+    public ChangelogFormat? Format { get; init; }
 }
 
 internal class RemoteWeakAura {
