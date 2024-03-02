@@ -180,7 +180,6 @@ public partial class WeakAuraManager(string gameFolder) {
         var gameVersionPath = Path.Combine(gameFolder, gameVersion == GameVersion.Retail ? "_retail_" : "_classic_era");
         var addonPath = Path.Combine(gameVersionPath, "Interface", "AddOns", "WowaCompanion");
         if (Directory.Exists(addonPath)) {
-            Directory.Delete(addonPath, true);
             return;
         }
 
