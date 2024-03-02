@@ -50,7 +50,7 @@ internal class RemoteWeakAura {
     public required string Username { get; init; }
     public required int Version { get; init; }
     public required string VersionString { get; init; }
-    public required Changelog Changelog { get; init; }
+    public required Changelog? Changelog { get; init; }
 }
 
 public class LocalWeakAura {
@@ -71,7 +71,7 @@ public class WeakAuraUpdate {
     public required int WagoVersion { get; init; }
     public required string WagoSemver { get; init; }
     public required string Source { get; init; }
-    public required Changelog Changelog { get; init; }
+    public required Changelog? Changelog { get; init; }
 }
 
 public partial class WeakAuraManager(string gameFolder) {
@@ -142,9 +142,14 @@ public partial class WeakAuraManager(string gameFolder) {
     }
 
     private string SerializeWeakAuraUpdate(WeakAuraUpdate update) {
-        var changelog = update.Changelog.Format == ChangelogFormat.Bbcode
-            ? MarkupSanitizer.SanitizeBbCode(update.Changelog.Text)
-            : MarkupSanitizer.SanitizeMarkdown(update.Changelog.Text);
+        var changelog = "";
+
+        if (update.Changelog != null) {
+            changelog = update.Changelog.Format == ChangelogFormat.Bbcode
+                ? MarkupSanitizer.SanitizeBbCode(update.Changelog.Text)
+                : MarkupSanitizer.SanitizeMarkdown(update.Changelog.Text);
+        }
+
         List<string> lines = [
             $"[\"{update.Slug}\"] = {{",
             $"    name = [=[{update.Name}]=],",
@@ -267,14 +272,16 @@ public partial class WeakAuraManager(string gameFolder) {
             });
         }
 
-        if (updates.Count > 0) {
-            var gameVersion = GameVersion.Retail;
-            var gameVersionPath =
-                Path.Combine(gameFolder, gameVersion == GameVersion.Retail ? "_retail_" : "_classic_era");
-            var addonPath = Path.Combine(gameVersionPath, "Interface", "AddOns", "WowaCompanion");
-            var dataLuaPath = Path.Combine(addonPath, "Data.lua");
-            await File.WriteAllLinesAsync(dataLuaPath, GenerateCompanionDataFile(updates));
+        if (updates.Count <= 0) {
+            return updates;
         }
+
+        var gameVersion = GameVersion.Retail;
+        var gameVersionPath =
+            Path.Combine(gameFolder, gameVersion == GameVersion.Retail ? "_retail_" : "_classic_era");
+        var addonPath = Path.Combine(gameVersionPath, "Interface", "AddOns", "WowaCompanion");
+        var dataLuaPath = Path.Combine(addonPath, "Data.lua");
+        await File.WriteAllLinesAsync(dataLuaPath, GenerateCompanionDataFile(updates));
 
         return updates;
     }
