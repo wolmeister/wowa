@@ -91,7 +91,7 @@ public partial class WeakAuraManager(string gameFolder) {
         return accounts.First();
     }
 
-    public List<LocalWeakAura> GetLocalWeakAuras() {
+    private List<LocalWeakAura> GetInstalledWeakAuras() {
         var accountPath = GetAccountPath(GameVersion.Retail);
         var weakAurasPath = Path.Combine(accountPath, "SavedVariables", "WeakAuras.lua");
         if (File.Exists(weakAurasPath) == false) {
@@ -179,15 +179,15 @@ public partial class WeakAuraManager(string gameFolder) {
     private void InstallCompanionAddon(GameVersion gameVersion) {
         var gameVersionPath = Path.Combine(gameFolder, gameVersion == GameVersion.Retail ? "_retail_" : "_classic_era");
         var addonPath = Path.Combine(gameVersionPath, "Interface", "AddOns", "WowaCompanion");
-        if (Directory.Exists(addonPath)) {
-            return;
-        }
 
         Directory.CreateDirectory(addonPath);
 
         // Create the Data.lua file
         var dataLuaPath = Path.Combine(addonPath, "Data.lua");
-        File.WriteAllLines(dataLuaPath, GenerateCompanionDataFile([]));
+        if (File.Exists(dataLuaPath) == false) {
+            File.WriteAllLines(dataLuaPath, GenerateCompanionDataFile([]));
+        }
+
 
         // Create WowaCompanion.toc file
         var wowaCompanionTocPath = Path.Combine(addonPath, "WowaCompanion.toc");
@@ -209,7 +209,7 @@ public partial class WeakAuraManager(string gameFolder) {
         File.WriteAllLines(wowaCompanionLuaPath, [
             "local frame = CreateFrame(\"FRAME\")",
             "frame:RegisterEvent(\"ADDON_LOADED\")",
-            "loadedFrame:SetScript(\"OnEvent\", function(_, _, addonName)",
+            "frame:SetScript(\"OnEvent\", function(_, _, addonName)",
             "   if addonName == \"WowaCompanion\" then",
             "       if WeakAuras and WeakAuras.AddCompanionData and WowaCompanionData then",
             "           local WeakAurasData = WowaCompanionData.WeakAuras",
@@ -223,10 +223,8 @@ public partial class WeakAuraManager(string gameFolder) {
     }
 
     public async Task<List<WeakAuraUpdate>> UpdateAll() {
-        var weakAuras = GetLocalWeakAuras();
-        if (weakAuras.Count == 0) {
-            return [];
-        }
+        // Get the installed weak auras
+        var installedWeakAuras = GetInstalledWeakAuras();
 
         // Install the companion addon
         InstallCompanionAddon(GameVersion.Retail);
@@ -236,7 +234,7 @@ public partial class WeakAuraManager(string gameFolder) {
         const string url = "https://data.wago.io/api/check/weakauras";
 
         // Perform the request
-        var ids = weakAuras.ConvertAll(wa => $"\"{wa.Slug}\"");
+        var ids = installedWeakAuras.ConvertAll(wa => $"\"{wa.Slug}\"");
         var body = $"{{\"ids\": [{string.Join(",", ids)}]}}";
         var response = await client.PostAsync(url, new StringContent(body, Encoding.UTF8, "application/json"));
         var textResponse = await response.Content.ReadAsStringAsync();
@@ -249,7 +247,7 @@ public partial class WeakAuraManager(string gameFolder) {
         List<WeakAuraUpdate> updates = [];
 
         foreach (var remoteWeakAura in remoteWeakAuras) {
-            var installedWeakAura = weakAuras.Find(wa => wa.Slug == remoteWeakAura.Slug);
+            var installedWeakAura = installedWeakAuras.Find(wa => wa.Slug == remoteWeakAura.Slug);
             if (installedWeakAura == null || remoteWeakAura.Version <= installedWeakAura.Version) {
                 continue;
             }
@@ -269,10 +267,6 @@ public partial class WeakAuraManager(string gameFolder) {
                 Encoded = encoded,
                 Changelog = remoteWeakAura.Changelog
             });
-        }
-
-        if (updates.Count <= 0) {
-            return updates;
         }
 
         var gameVersion = GameVersion.Retail;
